@@ -96,7 +96,7 @@ The ZeroMoon contract mitigates risks inherent in earlier reflection tokens thro
 ## List of All Functions
 
 
-# 1. Constructor
+**1. Constructor**
 - **Function**: `constructor`
   - **Visibility**: Implicitly public (only called during deployment).
   - **Modifiers**: `payable`
@@ -108,7 +108,7 @@ The ZeroMoon contract mitigates risks inherent in earlier reflection tokens thro
     - `address payable _vaultAddress`: Address to receive BNB transfers.
   
 
-# 2. Public Functions
+**2. Public Functions**
 
 - **Function**: `isContract`
   - **Visibility**: `public`
@@ -173,7 +173,7 @@ The ZeroMoon contract mitigates risks inherent in earlier reflection tokens thro
   - **Returns**: `uint256`: Total tokens deposited to the LP from fees.
   - **Purpose**: Returns the total amount of tokens added to the liquidity pool via automatic liquidity addition.
 
-# 3. External Functions
+**3. External Functions**
 
 - **Function**: `setDevWallets`
   - **Visibility**: `external`
@@ -183,7 +183,7 @@ The ZeroMoon contract mitigates risks inherent in earlier reflection tokens thro
   - **Returns**: None
   - **Purpose**: Allows the owner to set the dev wallets for fee distribution (must be 3 EOAs).
 
-# 4. Private Functions
+**4. Private Functions**
 These functions are internal to the contract and handle core logic.
 
 - **Function**: `calculateMinAmount`
@@ -237,7 +237,7 @@ These functions are internal to the contract and handle core logic.
   - **Returns**: None
   - **Purpose**: Automatically swaps tokens for BNB and adds liquidity to the PancakeSwap pool if conditions (threshold, BNB balance) are met.
 
-# 5. Inherited Functions from `ERC20` (OpenZeppelin)
+**5. Inherited Functions from `ERC20` (OpenZeppelin)**
 
 - **Function**: `name`
   - **Visibility**: `public`
@@ -290,7 +290,7 @@ These functions are internal to the contract and handle core logic.
   - **Returns**: `bool`: True if successful.
   - **Purpose**: Decreases the allowance for a spender.
 
-# 6. Inherited Functions from `Ownable` (OpenZeppelin)
+**6. Inherited Functions from `Ownable` (OpenZeppelin)**
 
 - **Function**: `owner`
   - **Visibility**: `public`
@@ -313,7 +313,7 @@ These functions are internal to the contract and handle core logic.
   - **Returns**: None
   - **Purpose**: Transfers ownership to a new address.
 
-# 7. Fallback Function
+**7. Fallback Function**
 - **Function**: `receive`
   - **Visibility**: `external`
   - **Modifiers**: `payable`
@@ -326,10 +326,10 @@ These functions are internal to the contract and handle core logic.
 
 ## Reflection
 
-# Process
+**Process**
 Reflection, or auto-staking, is a mechanism where holders automatically receive a portion of the transaction fees without needing to stake their tokens manually. In `ZeroMoon`, this is achieved by adjusting a scaling factor (`_scalingFactor`) to distribute reflection fees to non-excluded holders, effectively increasing their token balances over time without explicit transfers.
 
-# How It Works
+**How It Works**
 The reflection mechanism follows a structured logic integrated into the contract’s transfer and fee distribution process:
 
 - **Condition Check**:
@@ -412,10 +412,11 @@ The reflection mechanism follows a structured logic integrated into the contract
     emit ReflectionShared(msg.sender, reflectionAmount);
     ```
 
-# Post-LP Stop
+**Post-LP Stop**
 - Once `_lpStop` is true (after `LP_DEPOSIT_LIMIT` is reached), the reflection (auto-staking) fee increases to 5.5%, enhancing rewards for holders as liquidity fees cease. 
 
-## Meaning for Users
+**Meaning for Users**
+
 - **Passive Income**:
   - Holders automatically earn more tokens simply by holding, as each transaction redistributes fees to non-excluded holders via `_scalingFactor` adjustments.
 - **Increased Rewards Over Time**:
@@ -429,10 +430,10 @@ The reflection mechanism follows a structured logic integrated into the contract
 
 ## Burning
 
-# Process
+**Process**
 Tokens are burned by transferring them to a designated burn address (`deadWallet`, address `0x000...dEaD`), until the total burned tokens reach the predefined `BURN_LIMIT` of 200 million 0Moon tokens. This burning process is integrated into the `_distributeFees` function, which handles fee distribution during each transaction. While the tokens are sent to `deadWallet`, a `Transfer` event is emitted with `address(0)` as the recipient to signal the burn, following ERC20 conventions.
 
-# How It Works
+**How It Works**
 The burning mechanism follows a structured logic:
 
 - **Condition Check**:
@@ -495,13 +496,13 @@ The burning mechanism follows a structured logic:
     ```
   - This ties burn progress to liquidity addition frequency.
 
-# Post-Burn Limit
+**Post-Burn Limit**
 - Once `_burnedTokens` reaches `BURN_LIMIT` (200 million tokens), burning stops:
   - `_burnStop` is set to `true`.
   - The burn fee becomes 0%.
   - The 2.5% burn fee is redirected: reflection fee increases to 4.5%, liquidity to 4.75%, and dev fee reduces to 0.75%.
 
-# Meaning for Users
+**Meaning for Users**
 - **Supply Reduction**:
   - Burning removes tokens from circulation, reducing the effective supply from 1 billion to 800 million tokens (including the initial 200M burned during IFO). This increases scarcity, potentially enhancing token value.
 - **Controlled Deflation**:
@@ -513,10 +514,10 @@ The burning mechanism follows a structured logic:
 
 ## Automated Liquidity
 
-# Process
+**Process**
 Automated liquidity addition ensures the PancakeSwap liquidity pool grows over time by using a portion of transaction fees. The contract accumulates liquidity fees in `_accumulatedLiquidityTokens`, and when certain conditions are met, it swaps half of these tokens for BNB and adds them to the pool, up to an `LP_DEPOSIT_LIMIT` of 2.6 billion tokens.
 
-# How It Works
+**How It Works**
 The automated liquidity mechanism is integrated into the `_distributeFees` and `_addLiquidityAutomatically` functions:
 
 - **Condition Check**:
@@ -620,10 +621,11 @@ The automated liquidity mechanism is integrated into the `_distributeFees` and `
     emit LiquidityAdditionFailed(tokenAmount, "Swap failed");
     ```
 
-# Post-LP Stop
+**Post-LP Stop**
 - Once `_totalLpDeposited` reaches `LP_DEPOSIT_LIMIT` (2.6 billion tokens), `_lpStop` is set to `true`, stopping further liquidity addition. Liquidity fees become 0%, and the total fee drops to 6%.
 
-## Meaning for Users
+**Meaning for Users**
+
 - **Stable Trading**:
   - Automated liquidity ensures the PancakeSwap pool grows, reducing slippage and improving trading stability.
 - **Long-Term Growth**:
@@ -637,10 +639,10 @@ The automated liquidity mechanism is integrated into the `_distributeFees` and `
 
 ## Developer Support
 
-# Process
+**Process**
 The **Developer Support** mechanism in `The_ZeroMoon` contract allocates a portion of each transaction’s fees to support the development team, ensuring the project’s sustainability. These fees are initially sent to a single developer wallet (`devWallet`) or distributed across multiple wallets (`devWallets`) if set. Over time, as the contract progresses through its phases (burn stop and LP stop), the developer fee decreases, and a portion of this reduction is redirected to enhance reflection (auto-staking) rewards for the community. This reflects the developers’ commitment to giving back by sharing 50% of their fee allocation with holders.
 
-# How It Works
+**How It Works**
 The developer fee mechanism is embedded in the `_distributeFees` function, and its interaction with reflection rewards evolves across three phases: before burn stop, after burn stop but before LP stop, and after LP stop. Let’s break this down:
 
 - **Developer Fee Rates Across Phases**:
@@ -706,7 +708,7 @@ The developer fee mechanism is embedded in the `_distributeFees` function, and i
     emit Transfer(contractAddress, devWallet, devAmount);
     ```
 
-# Meaning for Users
+**Meaning for Users**
 - **Transparency**:
   - Dev fees are transparently allocated, with events logging each distribution, and no hidden pre-allocations exist at deployment.
 - **Sustainability**:
