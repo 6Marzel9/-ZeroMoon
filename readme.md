@@ -327,9 +327,11 @@ These functions are internal to the contract and handle core logic.
 ## Reflection
 
 **Process**
+
 Reflection, or auto-staking, is a mechanism where holders automatically receive a portion of the transaction fees without needing to stake their tokens manually. In `ZeroMoon`, this is achieved by adjusting a scaling factor (`_scalingFactor`) to distribute reflection fees to non-excluded holders, effectively increasing their token balances over time without explicit transfers.
 
 **How It Works**
+
 The reflection mechanism follows a structured logic integrated into the contract’s transfer and fee distribution process:
 
 - **Condition Check**:
@@ -431,9 +433,11 @@ The reflection mechanism follows a structured logic integrated into the contract
 ## Burning
 
 **Process**
+
 Tokens are burned by transferring them to a designated burn address (`deadWallet`, address `0x000...dEaD`), until the total burned tokens reach the predefined `BURN_LIMIT` of 200 million 0Moon tokens. This burning process is integrated into the `_distributeFees` function, which handles fee distribution during each transaction. While the tokens are sent to `deadWallet`, a `Transfer` event is emitted with `address(0)` as the recipient to signal the burn, following ERC20 conventions.
 
 **How It Works**
+
 The burning mechanism follows a structured logic:
 
 - **Condition Check**:
@@ -515,9 +519,11 @@ The burning mechanism follows a structured logic:
 ## Automated Liquidity
 
 **Process**
+
 Automated liquidity addition ensures the PancakeSwap liquidity pool grows over time by using a portion of transaction fees. The contract accumulates liquidity fees in `_accumulatedLiquidityTokens`, and when certain conditions are met, it swaps half of these tokens for BNB and adds them to the pool, up to an `LP_DEPOSIT_LIMIT` of 2.6 billion tokens.
 
 **How It Works**
+
 The automated liquidity mechanism is integrated into the `_distributeFees` and `_addLiquidityAutomatically` functions:
 
 - **Condition Check**:
@@ -640,9 +646,11 @@ The automated liquidity mechanism is integrated into the `_distributeFees` and `
 ## Developer Support
 
 **Process**
+
 The **Developer Support** mechanism in `The_ZeroMoon` contract allocates a portion of each transaction’s fees to support the development team, ensuring the project’s sustainability. These fees are initially sent to a single developer wallet (`devWallet`) or distributed across multiple wallets (`devWallets`) if set. Over time, as the contract progresses through its phases (burn stop and LP stop), the developer fee decreases, and a portion of this reduction is redirected to enhance reflection (auto-staking) rewards for the community. This reflects the developers’ commitment to giving back by sharing 50% of their fee allocation with holders.
 
 **How It Works**
+
 The developer fee mechanism is embedded in the `_distributeFees` function, and its interaction with reflection rewards evolves across three phases: before burn stop, after burn stop but before LP stop, and after LP stop. Let’s break this down:
 
 - **Developer Fee Rates Across Phases**:
@@ -728,7 +736,7 @@ The developer fee mechanism is embedded in the `_distributeFees` function, and i
 The **Reduced Impact** aspect of the Developer Support mechanism in `ZeroMoon` contract reflects the developers’ commitment to the community. By reducing their fee from 1% to 0.5%—a 50% reduction—they redirect this portion to enhance reflection (auto-staking) rewards, increasing the reflection fee from 3.5% to 5.5% over time. This sharing mechanism benefits users by providing greater passive income, fostering trust, and ensuring the project’s long-term sustainability while maintaining transparency through events and clear fee structures, all while maintaining scalability for +20 million users. 
 
 ## Community and Governance
-ZeroMoon is fully self-sustaining and autonomous.
+- **ZeroMoon** is fully self-sustaining and autonomous.
 
 ---
 
