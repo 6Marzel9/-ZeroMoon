@@ -35,7 +35,6 @@ ZeroMoon is optimized for scalability, using constant-time operations for reflec
 - **Burn and Liquidity Caps:** Limits token burning to 20% of the total supply and liquidity addition from fees to 2.6 billion tokens.
 - **Scalability:** Supports up to 20 million users with O(1) time complexity operations for efficiency at scale.
 - **No Exploitable Assets:** Ensures the contract holds no drainable assets (BNB, tokens, or LP tokens).
-- **Scalability** for +20 million users
 
 ---
 
@@ -48,7 +47,7 @@ ZeroMoon’s tokenomics are designed to balance rewards, scarcity, and ecosystem
 - **Burn Mechanism**: Burns tokens until 200,000,000 0MOON (20% of supply) are removed.
   - Set via `BURN_LIMIT = ORIGINAL_SUPPLY * 20 / 100`.
 
-- **Transaction Fees** (in basis points, where 100 = 1%):
+- **Transaction Fees** 
   - **Before Burn Limit (10% Total Fee)**:
     - **Reflection**: 3.5% (`REFLECTION_FEE_BEFORE = 350`)
     - **Liquidity**: 3% (`LIQUIDITY_FEE_BEFORE = 300`)
@@ -77,10 +76,9 @@ ZeroMoon’s tokenomics are designed to balance rewards, scarcity, and ecosystem
 ## Safety Mechanisms
 The ZeroMoon contract mitigates risks inherent in earlier reflection tokens through:
 
-- **Ownership Renouncement:** After the Initial Fair Offering (IFO), ownership can be renounced, disabling all onlyOwner functions for true decentralization.
+- **Ownership Renouncement:** After the token launch, ownership will be renounced, disabling all onlyOwner functions for true decentralization.
 - **Immutable Addresses:** Critical addresses (pancakeSwapV2Pair, vaultAddress) are fixed at deployment, preventing manipulation.
 - **Reentrancy Protection:** Uses the nonReentrant modifier to secure external calls, thwarting reentrancy attacks.
-
 
 ---
 
@@ -508,7 +506,7 @@ The burning mechanism follows a structured logic:
 
 **Meaning for Users**
 - **Supply Reduction**:
-  - Burning removes tokens from circulation, reducing the effective supply from 1 billion to 800 million tokens (including the initial 200M burned during IFO). This increases scarcity, potentially enhancing token value.
+  - Burning removes tokens from circulation, reducing the effective supply from 1 billion to 800 million tokens. This increases scarcity, potentially enhancing token value.
 - **Controlled Deflation**:
   - `BURN_LIMIT` caps burning at 200 million tokens, ensuring a balance between deflation and maintaining enough tokens for trading and utility.
 - **Transparency**:
@@ -651,7 +649,7 @@ The **Developer Support** mechanism in `The_ZeroMoon` contract allocates a porti
 
 **How It Works**
 
-The developer fee mechanism is embedded in the `_distributeFees` function, and its interaction with reflection rewards evolves across three phases: before burn stop, after burn stop but before LP stop, and after LP stop. Let’s break this down:
+The developer fee mechanism is embedded in the `_distributeFees` function, and its interaction with reflection rewards evolves across three phases: before burn stop, after burn stop but before LP stop, and after LP stop.
 
 - **Developer Fee Rates Across Phases**:
   - **Before Burn Stop**: 1% (`DEV_B4_BST` = 100 basis points).
@@ -717,6 +715,7 @@ The developer fee mechanism is embedded in the `_distributeFees` function, and i
     ```
 
 **Meaning for Users**
+
 - **Transparency**:
   - Dev fees are transparently allocated, with events logging each distribution, and no hidden pre-allocations exist at deployment.
 - **Sustainability**:
