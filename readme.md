@@ -2,8 +2,6 @@
 
 ![ZeroMoon Logo](zeromoon.png)
 
-ZeroMoon is an advanced reflection (auto-staking) token deployed on the Binance Smart Chain (BSC), inspired by SafeMoon but reengineered for enhanced safety, autonomy, and scalability. It introduces automated liquidity management, dynamic fee adjustments, and a secure, decentralized framework to eliminate centralized vulnerabilities.
-
 ---
 
 ## Table of Contents
@@ -25,7 +23,9 @@ ZeroMoon is an advanced reflection (auto-staking) token deployed on the Binance 
 ---
 
 ## Introduction
-ZeroMoon is a decentralized token on BSC that rewards holders through automatic reflection (auto-staking), reduces supply via burning, and enhances liquidity on PancakeSwap V2. Built with autonomy in mind, it requires no manual intervention post-deployment, leveraging smart contract logic to manage rewards, burns, liquidity, and developer support.
+ZeroMoon is an advanced reflection (auto-staking) token deployed on the Binance Smart Chain (BSC), inspired by SafeMoon but reengineered for enhanced safety, autonomy, and scalability. It introduces automated liquidity management, dynamic fee adjustments, and a secure, decentralized framework to eliminate centralized vulnerabilities.
+
+ZeroMoon is optimized for scalability, using constant-time operations for reflections and fee distribution, ensuring low gas costs and the ability to support up to 20 million users efficiently.
 
 ---
 
