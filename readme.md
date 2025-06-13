@@ -86,6 +86,10 @@ The ZeroMoon contract incorporates several design choices to enhance security an
 - **Reentrancy Protection**: Utilizes OpenZeppelin's `ReentrancyGuard` modifier (`nonReentrant`) on key functions involved in external calls or state changes related to liquidity operations (`executeLpFromPoke`, `triggerAutoLiquidity`, `_addLiquidityAutomatically`), protecting against reentrancy attacks.
 - **Locked Liquidity**: LP tokens generated from automated liquidity additions are sent directly to the `deadWallet`. This effectively burns the LP tokens, permanently locking the underlying 0Moon and BNB in the PancakeSwap liquidity pool and preventing a "rug pull" of this contract-generated liquidity.
 - **No Arbitrary Withdrawals**: The contract does not contain functions allowing the owner or any other address to arbitrarily withdraw 0Moon tokens or BNB held within it. Asset movements are governed by the predefined programmatic logic of the tokenomics (fee distribution, liquidity addition, specific transfers to `boxAddress`).
+- **User-Triggerable Liquidity Addition (Decentralized Backup)**:
+    - The `triggerAutoLiquidity()` function is public and can be called by *any user or external actor*.
+    - If the ZeroMoon contract has accumulated sufficient tokens (`MIN_TOKENS_TO_PROCESS_PER_CYCLE`) and BNB (`MIN_BNB_BALANCE`) for an LP event, and the `LP_DEPOSIT_LIMIT` has not been reached, any call to `triggerAutoLiquidity()` will initiate the contract's automated liquidity addition process.
+    - This permissionless trigger serves as a crucial decentralized backup, ensuring that the liquidity mechanism can always be activated by the community if the primary EchoPinger bot is offline or if there's any delay. It guarantees that accumulated liquidity reserves will be processed and not left indefinitely unused within the contract. This feature underscores the contract's autonomy and resilience, further securing against tokens becoming "stuck."
 
 ---
 
@@ -229,10 +233,14 @@ To ensure a robust and deep trading pool on PancakeSwap, ZeroMoon automatically 
 
 **How It Works**
 - **Fee Collection**: Liquidity fees (3.0% or 4.75% depending on phase) are added to `_accumulatedLiquidityTokens` and the contract's own token balance (`_userAccountData[contractAddress].scaledBalance`).
-- **Trigger Conditions**: Liquidity addition is triggered from `_distributeFees` (or `executeLpFromPoke`/`triggerAutoLiquidity`) if:
-    - `_accumulatedLiquidityTokens >= MIN_TOKENS_TO_PROCESS_PER_CYCLE` (currently 10 million tokens with 18 decimals).
-    - `contractAddress.balance >= MIN_BNB_BALANCE` (currently 0.001 BNB).
-    - `_totalLpDeposited < LP_DEPOSIT_LIMIT`.
+- **Trigger Conditions & Execution**: Liquidity addition can be initiated in several ways:
+    - **Internally**: From `_distributeFees` after a regular transaction, if conditions are met.
+    - **By EchoPinger Bot**: Via the authorized `executeLpFromPoke()` call (if configured and called).
+    - **By Any User**: Via the public `triggerAutoLiquidity()` function.
+  Regardless of the trigger, the core conditions checked by the contract before proceeding with `_addLiquidityAutomatically` are:
+    - `_accumulatedLiquidityTokens >= MIN_TOKENS_TO_PROCESS_PER_CYCLE`
+    - `contractAddress.balance >= MIN_BNB_BALANCE`
+    - `_totalLpDeposited < LP_DEPOSIT_LIMIT`
 - **Execution (`_addLiquidityAutomatically`)**:
     1.  Calculates `tokensToProcessThisCycle`, respecting `MAX_LIQUIDIFY_PERCENT_OF_RESERVES_BPS` and `ABSOLUTE_MAX_TOKENS_TO_PROCESS_PER_CYCLE`.
     2.  Adjusts amounts if nearing `LP_DEPOSIT_LIMIT` to add exactly the remaining capacity.
