@@ -14,6 +14,7 @@
 - [Reflection (Auto-Staking)](#reflection)
 - [Burning](#burning)
 - [Automated Liquidity](#automated-liquidity)
+  - [Post-LP Limit: Token Management and Fair Distribution of Residuals](#post-lp-limit-token-management-and-fair-distribution-of-residuals)
 - [Developer Support: Reduced Impact and Community Sharing](#developer-support)
 - [Conclusion](#conclusion)
 - [Community and Governance](#community-and-governance)
@@ -38,6 +39,7 @@ The ZeroMoon contract is optimized for scalability, primarily utilizing constant
 - **Scalability:** Designed with O(1) time complexity for core operations like reflection distribution, enabling efficient performance even with a large and active user base.
 - **Programmatically Managed Assets:** The contract holds 0Moon tokens (for liquidity/reflection) and BNB (for gas). These assets are managed by the smart contract's predefined logic for their intended purposes (e.g., adding liquidity, fee distribution, sending to `boxAddress` under specific conditions) and are not arbitrarily drainable by the owner or external parties through direct withdrawal functions.
 - **Configurable FairLaunch Address**: Owner can set a `fairLaunchAddress` (e.g., for Initial Farm Offerings - IFOs), which is automatically excluded from transaction fees and reflection rewards.
+- **Fair Distribution of Residual Tokens**: After liquidity goals are met, any non-earmarked 0Moon tokens remaining in the contract are distributed to holders via reflection, ensuring no tokens are "stuck" or misused.
 
 ---
 
@@ -91,7 +93,7 @@ The ZeroMoon contract incorporates several design choices to enhance security an
 - **Immutable Addresses**: Critical infrastructure addresses such as the `pancakeSwapV2Pair`, `deadWallet`, primary `devWallet`, and `boxAddress` are set at deployment and are immutable, preventing malicious changes.
 - **Reentrancy Protection**: Utilizes OpenZeppelin's `ReentrancyGuard` modifier (`nonReentrant`) on key functions involved in external calls or state changes related to liquidity operations (`executeLpFromPoke`, `triggerAutoLiquidity`), protecting against reentrancy attacks. Note: `_addLiquidityAutomatically` is private and not directly `nonReentrant` but is called by `nonReentrant` functions.
 - **Locked Liquidity**: LP tokens generated from automated liquidity additions are sent directly to the `deadWallet`. This effectively burns the LP tokens, permanently locking the underlying 0Moon and BNB in the PancakeSwap liquidity pool and preventing a "rug pull" of this contract-generated liquidity.
-- **No Arbitrary Withdrawals**: The contract does not contain functions allowing the owner or any other address to arbitrarily withdraw 0Moon tokens or BNB held within it. Asset movements are governed by the predefined programmatic logic of the tokenomics (fee distribution, liquidity addition, specific transfers to `boxAddress`).
+- **No Arbitrary Withdrawals**: The contract does not contain functions allowing the owner or any other address to arbitrarily withdraw 0Moon tokens or BNB held within it. Asset movements are governed by the predefined programmatic logic of the tokenomics (fee distribution, liquidity addition, specific transfers to `boxAddress`, and distribution of residual tokens to holders via reflection).
 - **User-Triggerable Liquidity Addition (Decentralized Backup)**:
     - The `triggerAutoLiquidity()` function is public and can be called by *any user or external actor*.
     - If the ZeroMoon contract has accumulated sufficient tokens (`MIN_TOKENS_TO_PROCESS_PER_CYCLE`) and BNB (`MIN_BNB_BALANCE`) for an LP event, and the `LP_DEPOSIT_LIMIT` has not been reached, any call to `triggerAutoLiquidity()` will initiate the contract's automated liquidity addition process.
@@ -100,7 +102,7 @@ The ZeroMoon contract incorporates several design choices to enhance security an
 ---
 
 ## Contract Overview
-- **Contract address**: [0xeb92bc0fd1af01d156142ae379004ed681b5c34c](https://testnet.bscscan.com/address/0xeb92bc0fd1af01d156142ae379004ed681b5c34c) (Testnet)
+- **Contract address**: [0x2e1299066389775dee6149e317affa404ce3d2f4](https://testnet.bscscan.com/address/0x2e1299066389775dee6149e317affa404ce3d2f4) (Testnet)
 - **Contract Name**: `ZeroMoon`
 - **SPDX License**: MIT
 - **Solidity Version**: 0.8.30
@@ -160,7 +162,7 @@ The ZeroMoon contract incorporates several design choices to enhance security an
 **6. Internal Core Logic Functions (Private/Internal)**
 - `_update(address sender, address recipient, uint256 amount)`: Core internal function overriding ERC20, handles all token movements, fee application, reflection accounting, and holder counts.
 - `_calculateFees(uint256 amount)`: Calculates fee breakdown based on current contract phase.
-- `_distributeFees(...)`: Distributes collected fees to reflection, liquidity, burn, and dev; triggers `_applyReflectionTokens` and `_addLiquidityAutomatically`.
+- `_distributeFees(...)`: Distributes collected fees to reflection, liquidity, burn, and dev; triggers `_applyReflectionTokens` and `_addLiquidityAutomatically`. **Crucially, this function also handles the fair distribution of residual contract tokens to holders via reflection after LP goals are met (see [Automated Liquidity](#post-lp-limit-token-management-and-fair-distribution-of-residuals)).**
 - `_applyReflectionTokens()`: Adjusts `_scalingFactor` to distribute reflection rewards.
 - `_addLiquidityAutomatically()`: `private`. Swaps tokens for BNB and adds to LP. (Called by `nonReentrant` functions).
 - `handleLpAddFailure(uint256 tokensIntendedForLp)`: Manages repeated LP addition failures.
@@ -178,7 +180,10 @@ Reflection, or auto-staking, is ZeroMoon's mechanism for rewarding holders. A po
 
 **How It Works**
 
-- **Fee Collection**: Reflection fees (3.5%, 4.5%, or 5.5% depending on the contract phase) are taken from transactions and added to `_accumulatedReflectionTokens`.
+- **Sources of Reflection Tokens**:
+    - **Transaction Fees**: The primary source is the reflection fee (3.5%, 4.5%, or 5.5% depending on the contract phase) taken from transactions and added to `_accumulatedReflectionTokens`.
+    - **Residual Contract Tokens (Fair Distribution)**: After liquidity provision goals (`LP_DEPOSIT_LIMIT`) are fully met and LP operations have stopped (`_lpStop` is true), any remaining 0Moon tokens held directly by the contract (that are not part of `_accumulatedLiquidityTokens` and thus not earmarked for other specific purposes like LP or box transfer) are also added to `_accumulatedReflectionTokens`. This ensures these tokens are fairly distributed to all eligible holders. (See details under [Automated Liquidity](#post-lp-limit-token-management-and-fair-distribution-of-residuals)).
+    - **Failed LP Tokens (Fallback)**: In rare cases where repeated attempts to add liquidity fail (exceeding `MAX_CONSECUTIVE_LP_ADD_FAILURES`), tokens intended for LP might be diverted to the reflection pool as a fallback mechanism.
     ```solidity
     // In _distributeFees, after fees are calculated:
     if (reflectionAmount != 0) {
@@ -186,6 +191,7 @@ Reflection, or auto-staking, is ZeroMoon's mechanism for rewarding holders. A po
         _totalReflectionTokensCollected += reflectionAmount; // Track gross total
         emit ReflectionShared(contractAddress, reflectionAmount);
     }
+    // ... plus logic for residual contract tokens and failed LP tokens adding to _accumulatedReflectionTokens
     ```
 - **Distribution via Scaling Factor**: The `_applyReflectionTokens` function is called (typically from `_distributeFees`) to process these accumulated tokens:
     ```solidity
@@ -208,7 +214,7 @@ Reflection, or auto-staking, is ZeroMoon's mechanism for rewarding holders. A po
 **Meaning for Users**
 - **Passive Earnings**: Hold 0Moon and automatically earn more from transaction activity.
 - **Increasing Reward Rates**: As the project matures (burn and LP limits reached), the reflection fee percentage increases, enhancing rewards.
-- **Fairness**: By excluding most contract addresses, reflections primarily benefit individual holders.
+- **Fairness**: By excluding most contract addresses, reflections primarily benefit individual holders. Furthermore, residual contract tokens are also channeled back to holders.
 - **Efficiency**: The O(1) scaling factor method is gas-efficient and highly scalable.
 
 ---
@@ -267,13 +273,48 @@ To ensure a robust and deep trading pool on PancakeSwap, ZeroMoon automatically 
     6.  Updates `_accumulatedLiquidityTokens` (decremented) and `_totalLpDeposited` (incremented with `lpTokenAmount`).
     7.  Handles potential failures in swap or LP addition, with retries and fallback mechanisms (see `handleLpAddFailure`). If failures persist, tokens might be moved to reflection.
 - **Events**: `LiquidityAdded` on success, `LiquidityAdditionFailed` on failure. `LpProcessingStopSet` when `_lpStop` becomes true.
-- **Post-LP Limit**: Once `_lpStop` is true, the liquidity fee becomes 0%. Small remaining `_accumulatedLiquidityTokens` (below `MIN_TOKENS_TO_PROCESS_PER_CYCLE`) may be sent to the `boxAddress`. Excess 0Moon tokens held by the contract (not part of `_accumulatedLiquidityTokens`) are added to the reflection pool.
+
+### Post-LP Limit: Token Management and Fair Distribution of Residuals
+This section details how ZeroMoon handles tokens once the primary liquidity provision goals are met, emphasizing fairness to holders.
+
+-   **Cessation of Liquidity Fees**: Once `_lpStop` is true (triggered when `_totalLpDeposited` reaches `LP_DEPOSIT_LIMIT` or `_totalGrossLpCollected` reaches its corresponding target, typically `LP_DEPOSIT_LIMIT * 2`), the liquidity fee component in transactions becomes 0%.
+-   **Sweeping Small Accumulated LP Tokens**: If `_lpStop` is true and there are still `_accumulatedLiquidityTokens` (tokens specifically collected for LP) but the amount is below `MIN_TOKENS_TO_PROCESS_PER_CYCLE` (i.e., too small for a full LP cycle), these specific tokens are sent to the `boxAddress`. This transfer is typically triggered by `executeLpFromPoke` or `triggerAutoLiquidity` after an LP attempt or check confirms the conditions.
+    ```solidity
+    // Logic in _sendAccumulatedLpTokensToBox (called under specific conditions):
+    // ERC20.transfer(boxAddress, tokensToTransfer);
+    ```
+-   **CRITICAL UPDATE: Fair Distribution of Other Residual Contract Tokens to Holders**:
+    To ensure maximum fairness and prevent any 0Moon tokens from being indefinitely "stuck" or misused within the contract after its primary liquidity functions are complete, a specific mechanism within the `_distributeFees` function handles **all other 0Moon tokens held directly by the contract** (i.e., its `_userAccountData[contractAddress].scaledBalance` that are *not* part of `_accumulatedLiquidityTokens`).
+
+    If **all** the following conditions are met:
+    1.  `_lpStop` is `true` (liquidity fee collection and automated LP addition have permanently stopped).
+    2.  `_totalLpDeposited` is greater than or equal to `LP_DEPOSIT_LIMIT` (the net liquidity target for the PancakeSwap pool has been successfully met).
+    3.  `_accumulatedLiquidityTokens` is `0` (there are no more tokens specifically earmarked or collected for liquidity purposes).
+    4.  The contract itself (`address(this)`) still holds a balance of 0Moon tokens (e.g., these could be remnants from previous operations, tiny unprocessable amounts from fee calculations, or tokens directly transferred to the contract address for any reason).
+
+    Then, these residual 0Moon tokens are automatically added to the `_accumulatedReflectionTokens` pool.
+    ```solidity
+    // Snippet from _distributeFees:
+    // if (_lpStop &&
+    //     _totalLpDeposited >= LP_DEPOSIT_LIMIT &&
+    //     _accumulatedLiquidityTokens == 0 &&
+    //     _userAccountData[contractAddress].scaledBalance > 0) {
+    //
+    //     uint256 currentContractActualBalance = _userAccountData[contractAddress].scaledBalance;
+    //     _accumulatedReflectionTokens += currentContractActualBalance;
+    //     _totalReflectionTokensCollected += currentContractActualBalance;
+    //     _userAccountData[contractAddress].scaledBalance = 0;
+    //     emit ReflectionShared(contractAddress, currentContractActualBalance);
+    // }
+    ```
+    This ensures they are distributed to all eligible token holders through the standard reflection mechanism, rather than being sent to the `boxAddress` or remaining idle. This design prioritizes returning all possible residual value directly to the community once the contract's primary liquidity objectives are fulfilled.
 
 **Meaning for Users**
 - **Improved Trading Stability**: A growing liquidity pool reduces price slippage and supports larger trades.
 - **Locked Liquidity**: Sending LP tokens to the `deadWallet` is a critical safety feature, preventing rug pulls of contract-generated liquidity.
 - **Sustainable Growth**: Liquidity is built organically from transaction volume.
 - **Transparency**: Operations are logged via events.
+- **Ultimate Fairness**: After LP goals, all non-earmarked residual tokens in the contract are given back to holders as reflections.
 
 ---
 
@@ -303,7 +344,7 @@ A portion of transaction fees is allocated to developer wallet(s) to fund ongoin
 ---
 
 ## Conclusion
-ZeroMoon (0Moon) is engineered as a community-focused reflection token with robust, automated mechanisms for liquidity provision and token burning. Its dynamic fee structure adapts to project milestones, progressively increasing rewards for holders. Key safety features, including locked liquidity, programmatically managed contract assets, and configurable exclusions (like `fairLaunchAddress`), aim to build trust and long-term value. The developer support model also shares benefits with the community by redirecting a portion of their fees to reflections over time. ZeroMoon's design prioritizes fairness, transparency, and scalability.
+ZeroMoon (0Moon) is engineered as a community-focused reflection token with robust, automated mechanisms for liquidity provision and token burning. Its dynamic fee structure adapts to project milestones, progressively increasing rewards for holders. Key safety features, including locked liquidity, programmatically managed contract assets, and configurable exclusions (like `fairLaunchAddress`), aim to build trust and long-term value. **Crucially, its design ensures that after primary liquidity goals are met, any residual 0Moon tokens held by the contract are fairly distributed back to holders via reflection.** The developer support model also shares benefits with the community by redirecting a portion of their fees to reflections over time. ZeroMoon's design prioritizes fairness, transparency, and scalability.
 
 ---
 
