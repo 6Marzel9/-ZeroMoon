@@ -34,8 +34,8 @@ The ZeroMoon contract is optimized for scalability, primarily utilizing constant
 - **Dynamic Fee Structure:** Transaction fees automatically adjust based on the achievement of burn and liquidity provision milestones, ensuring a balanced approach to rewards, deflation, and long-term sustainability.
 - **Automated Liquidity Addition:** The contract programmatically collects a portion of fees to add liquidity to a PancakeSwap V2 pair when defined thresholds are met, fostering a stable and healthy trading ecosystem. LP tokens generated are sent to a dead address, locking the liquidity.
 - **Burn and Liquidity Caps:**
-    - **Burn Limit**: Token burning from fees ceases once 25% of the original total supply has been burned.
-    - **Liquidity Deposit Limit**: Automated liquidity addition from fees stops once 50% of the original total supply has been designated for or added to the liquidity pool.
+    - **Burn Limit**: Token burning from fees ceases once 50% of the original total supply has been burned.
+    - **Liquidity Deposit Limit**: Automated liquidity addition from fees stops once the original total supply has been designated for or added to the liquidity pool.
 - **Scalability:** Designed with O(1) time complexity for core operations like reflection distribution, enabling efficient performance even with a large and active user base.
 - **Programmatically Managed Assets:** The contract holds 0Moon tokens (for liquidity/reflection) and BNB (for gas). These assets are managed by the smart contract's predefined logic for their intended purposes (e.g., adding liquidity, fee distribution, sending to `boxAddress` under specific conditions) and are not arbitrarily drainable by the owner or external parties through direct withdrawal functions.
 - **Configurable FairLaunch Address**: Owner can set a `fairLaunchAddress` (e.g., for Initial Farm Offerings - IFOs), which is automatically excluded from transaction fees and reflection rewards.
@@ -51,8 +51,8 @@ ZeroMoon’s tokenomics are meticulously designed to balance holder rewards, tok
 - **Total Supply (`ORIGINAL_SUPPLY`)**: 100,000,000,000 0Moon (100 Billion 0Moon)
   - Defined in contract as `ORIGINAL_SUPPLY = 100_000_000_000 * 10**18`.
 
-- **Burn Mechanism (`BURN_LIMIT`)**: Deflationary burning of tokens from transaction fees continues until 25,000,000,000 0Moon (25% of `ORIGINAL_SUPPLY`) are removed from circulation.
-  - Defined in contract as `BURN_LIMIT = ORIGINAL_SUPPLY * 25 / 100`.
+- **Burn Mechanism (`BURN_LIMIT`)**: Deflationary burning of tokens from transaction fees continues until 50,000,000,000 0Moon (50% of `ORIGINAL_SUPPLY`) are removed from circulation.
+  - Defined in contract as `BURN_LIMIT = ORIGINAL_SUPPLY * 50 / 100`.
 
 - **Transaction Fees (Dynamic Phases)**:
   *(Fees are percentages of the transaction amount, denominator is 10000)*
@@ -74,8 +74,8 @@ ZeroMoon’s tokenomics are meticulously designed to balance holder rewards, tok
     - **Burn**: 0% (Burn fee remains stopped)
     - **Developer**: 0.5% (`DEV_AFTER = 50`)
 
-- **LP Deposit Limit (`LP_DEPOSIT_LIMIT`)**: Automated liquidity addition from fees ceases after 50,000,000,000 0Moon (50% of `ORIGINAL_SUPPLY`) have been cumulatively designated for (`_totalGrossLpCollected` reaching `LP_DEPOSIT_LIMIT * 2`) or added to (`_totalLpDeposited` reaching `LP_DEPOSIT_LIMIT`) the PancakeSwap liquidity pool.
-  - Defined in contract as `LP_DEPOSIT_LIMIT = ORIGINAL_SUPPLY * 50 / 100`.
+- **LP Deposit Limit (`LP_DEPOSIT_LIMIT`)**: Automated liquidity addition from fees ceases after 100,000,000,000 0Moon (the `ORIGINAL_SUPPLY`) have been cumulatively designated for (`_totalGrossLpCollected` reaching `LP_DEPOSIT_LIMIT * 2`) or added to (`_totalLpDeposited` reaching `LP_DEPOSIT_LIMIT`) the PancakeSwap liquidity pool.
+  - Defined in contract as `LP_DEPOSIT_LIMIT = ORIGINAL_SUPPLY`.
 
 - **Reflection (Auto-Staking) Eligibility & Exclusions**:
     - All holders are eligible for reflections provided they are not explicitly excluded.
@@ -136,7 +136,7 @@ The ZeroMoon contract incorporates several design choices to enhance security an
 - `fairLaunchAddress`: Public state variable. Stores the configured FairLaunch address.
 - `holdersCount`: Public state variable. Returns the current number of token holders.
 - `_accumulatedLiquidityTokens`: Public state variable. Shows tokens currently held by the contract for LP addition.
-- `_totalLpDeposited`: Public state variable. Shows total net 0Moon tokens deposited into LP by the contract.
+- `_totalLpDeposited`: Public state variable. Shows total net 0Moon tokens deposited into the LP by the contract.
 - `_totalGrossLpCollected`: Public state variable. Shows the total gross 0Moon tokens ever collected from fees for LP purposes.
 - `_totalReflectionTokensCollected`: Public state variable. Shows the total gross 0Moon tokens ever collected from fees for reflection.
 - `_burnedTokens`: Public state variable. Shows total tokens burned via fees.
@@ -222,7 +222,7 @@ Reflection, or auto-staking, is ZeroMoon's mechanism for rewarding holders. A po
 ## Burning
 
 **Process**
-ZeroMoon incorporates a token burn mechanism to create deflationary pressure. A portion of transaction fees is designated as `burnAmount`. These tokens are effectively removed from circulation by allocating them to the `deadWallet`'s balance until the `BURN_LIMIT` (25% of `ORIGINAL_SUPPLY`) is reached.
+ZeroMoon incorporates a token burn mechanism to create deflationary pressure. A portion of transaction fees is designated as `burnAmount`. These tokens are effectively removed from circulation by allocating them to the `deadWallet`'s balance until the `BURN_LIMIT` (50% of `ORIGINAL_SUPPLY`) is reached.
 
 **How It Works**
 - **Fee Collection**: The burn fee (2.5% before `_burnStop`) is calculated in `_calculateFees`.
