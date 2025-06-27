@@ -102,7 +102,7 @@ The ZeroMoon contract incorporates several design choices to enhance security an
 ---
 
 ## Contract Overview
-- **Contract address**: [0x2e1299066389775dee6149e317affa404ce3d2f4](https://testnet.bscscan.com/address/0x2e1299066389775dee6149e317affa404ce3d2f4) (Testnet)
+- **Contract address**: [0x928a3a7dcce6d6e168734490577ee772024add15](https://bscscan.com/token/0x928a3a7dcce6d6e168734490577ee772024add15)
 - **Contract Name**: `ZeroMoon`
 - **SPDX License**: MIT
 - **Solidity Version**: 0.8.30
