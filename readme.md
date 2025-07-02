@@ -350,7 +350,7 @@ ZeroMoon (0Moon) is engineered as a community-focused reflection token with robu
 
 ## Community and Governance
 - ZeroMoon is designed for autonomous operation. Post-launch, with ownership renouncement (planned), governance may evolve through community consensus for future initiatives outside the immutable contract logic.
-- Join our community channels: [Telegram](https://t.me/) and [X](https://x.com/)
+- Join our community channels: [Telegram]([https://t.me/](https://t.me/zeromoon_revamped)) and [X]([https://x.com/](https://x.com/0MoonReVamped))
 
 ---
 
